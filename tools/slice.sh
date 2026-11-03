@@ -5,16 +5,18 @@ set -euo pipefail
 
 ORCA=${ORCA:-orca-slicer}
 PROFILE_DIR=${PROFILE_DIR:-profiles/orca}
-in=$1 out=$2
+in=$(realpath "$1") out=$2
+PROFILE_DIR=$(realpath "$PROFILE_DIR")
 
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
 
 # --datadir を一時ディレクトリにして GUI 側の設定に影響されないようにする
-if ! "$ORCA" --datadir "$work/data" \
+# 作業ディレクトリにログ (00000.log 等) を出すので一時ディレクトリで実行する
+if ! (cd "$work" && "$ORCA" --datadir "$work/data" \
         --load-settings "$PROFILE_DIR/machine.json;$PROFILE_DIR/process.json" \
         --load-filaments "$PROFILE_DIR/filament.json" \
-        --arrange 1 --orient 0 --slice 0 --outputdir "$work/out" "$in" \
+        --arrange 1 --orient 0 --slice 0 --outputdir "$work/out" "$in") \
         >"$work/log.txt" 2>&1; then
     grep -v libexpat "$work/log.txt" >&2 || true
     [[ -f $work/out/result.json ]] && cat "$work/out/result.json" >&2

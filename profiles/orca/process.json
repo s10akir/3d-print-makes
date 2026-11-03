@@ -83,7 +83,7 @@
   "dont_slow_down_outer_wall": "0",
   "draft_shield": "disabled",
   "during_print_exhaust_fan_speed": "70",
-  "elefant_foot_compensation": "0.15",
+  "elefant_foot_compensation": "0.25",
   "elefant_foot_compensation_layers": "1",
   "elefant_foot_layers_density": "100%",
   "emit_machine_limits_to_gcode": "1",
