@@ -3,11 +3,21 @@
 
 build_volume = [225, 225, 265];  // 造形可能範囲 [mm]
 nozzle       = 0.6;
-line_width   = 0.65;             // 押し出し幅の目安 (ノズル径 ×1.1 程度)
+line_width   = 0.62;             // 押し出し幅 (profiles/orca/process.json の line_width と合わせる)
 layer_height = 0.3;              // 0.6mm ノズルの標準的な積層ピッチ
 
-// 押し出し n 本分の壁厚
-function walls(n) = n * line_width;
+// 隣り合う線の中心間隔。スライサー (classic) は線を楕円断面とみなして
+// layer_height × (1 - π/4) だけ重ねるので、線幅より少し狭い
+line_spacing = line_width - layer_height * (1 - PI / 4);
+
+// ちょうど n 本の線で埋まる壁厚 (= 線幅 + (n-1) × 間隔)。
+// 2026-11-03 実測 (classic, wall_loops 2): 薄い壁は両側の輪郭から 1 周ずつ対称に作られるので、
+// すき間埋め (Gap infill) なしで出せるのは偶数本だけ。
+//   0.9〜1.24mm → 2 本 (walls(2) = 1.18)  /  1.3〜2.04mm → 2 本 + すき間埋め
+//   2.08〜2.34mm → 4 本 (walls(4) = 2.29) / 2.38mm〜 → 4 本 + すき間埋め
+// 奇数本は wall_generator を arachne にすれば出る (walls(3) = 1.73 で 3 本を確認) が、
+// 圧入穴などの実測値が classic 前提なので今は切り替えていない。
+function walls(n) = line_width + (n - 1) * line_spacing;
 
 // はめ合いのクリアランス (片側)。0.6mm ノズルは精度が落ちるので大きめ
 fit_clearance = 0.3;
