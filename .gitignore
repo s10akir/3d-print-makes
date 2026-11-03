@@ -8,3 +8,6 @@
 # OpenSCAD のバックアップ/一時ファイル
 *.scad~
 *.bak
+
+# 環境固有の設定 (PRINTER_HOST など)
+mise.local.toml

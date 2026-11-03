@@ -2,6 +2,9 @@ OPENSCAD ?= openscad
 BACKEND  ?= manifold
 FORMAT   ?= stl
 OUT      ?= out
+PROFILE_DIR ?= profiles/orca
+PROFILES := $(wildcard $(PROFILE_DIR)/*.json)
+export PROFILE_DIR
 
 export OPENSCADPATH := $(CURDIR)/lib
 
@@ -12,20 +15,40 @@ PNGS   := $(patsubst models/%.scad,$(OUT)/%.png,$(SRCS))
 SCAD_FLAGS := --backend=$(BACKEND)
 PNG_FLAGS  := --autocenter --viewall --imgsize=1024,768 --colorscheme=Tomorrow
 
-.PHONY: all png clean
+.PHONY: all png clean status
 all: $(MODELS)
 png: $(PNGS)
 
-$(OUT)/%.$(FORMAT): models/%.scad | $(OUT)
+$(OUT)/%.stl: models/%.scad | $(OUT)
+	$(OPENSCAD) $(SCAD_FLAGS) -d $@.d -o $@ $<
+
+$(OUT)/%.3mf: models/%.scad | $(OUT)
 	$(OPENSCAD) $(SCAD_FLAGS) -d $@.d -o $@ $<
 
 $(OUT)/%.png: models/%.scad | $(OUT)
 	$(OPENSCAD) $(SCAD_FLAGS) $(PNG_FLAGS) -d $@.d -o $@ $<
+
+# スライス (profiles/orca のプリセットを使用)
+$(OUT)/%.gcode: $(OUT)/%.stl $(PROFILES) tools/slice.sh
+	tools/slice.sh $< $@
+
+# プリンター操作: make print-<model> / make upload-<model> / make status
+print-%: $(OUT)/%.gcode
+	tools/moonraker.sh print $<
+
+upload-%: $(OUT)/%.gcode
+	tools/moonraker.sh upload $<
+
+status:
+	@tools/moonraker.sh status
 
 $(OUT):
 	mkdir -p $@
 
 clean:
 	rm -rf $(OUT)
+
+# 中間生成物 (STL) を自動削除しない
+.SECONDARY:
 
 -include $(wildcard $(OUT)/*.d)
