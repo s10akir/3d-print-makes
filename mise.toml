@@ -1,0 +1,3 @@
+# このディレクトリで openscad を起動したときに lib/ を include パスに通す
+[env]
+OPENSCADPATH = "{{config_root}}/lib"

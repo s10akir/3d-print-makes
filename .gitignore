@@ -1,0 +1,10 @@
+# ビルド成果物 (make で再生成できる)
+/out/
+
+# スライサー出力
+*.gcode
+*.bgcode
+
+# OpenSCAD のバックアップ/一時ファイル
+*.scad~
+*.bak
