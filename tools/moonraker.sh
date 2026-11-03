@@ -5,6 +5,7 @@
 #   tools/moonraker.sh print  <file.gcode>   アップロードして印刷開始
 set -euo pipefail
 
+# Moonraker API は Fluidd と同じ 80 番で nginx がプロキシしている (7125 は閉じている)
 HOST=${PRINTER_HOST:?PRINTER_HOST にプリンターのホストを設定してください (mise.local.toml の [env] など)}
 api=http://$HOST
 

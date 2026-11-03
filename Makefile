@@ -29,8 +29,10 @@ $(OUT)/%.png: models/%.scad | $(OUT)
 	$(OPENSCAD) $(SCAD_FLAGS) $(PNG_FLAGS) -d $@.d -o $@ $<
 
 # スライス (profiles/orca のプリセットを使用)
-$(OUT)/%.gcode: $(OUT)/%.stl $(PROFILES) tools/slice.sh
-	tools/slice.sh $< $@
+# out/foo@9.gcode のように @N を付けると foo を N 個並べてスライスする
+.SECONDEXPANSION:
+$(OUT)/%.gcode: $$(OUT)/$$(firstword $$(subst @, ,$$*)).stl $(PROFILES) tools/slice.sh
+	COPIES=$(or $(word 2,$(subst @, ,$*)),1) tools/slice.sh $< $@
 
 # プリンター操作: make print-<model> / make upload-<model> / make status
 print-%: $(OUT)/%.gcode

@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
 # STL を profiles/orca のプリセットで G-code にスライスする
 #   tools/slice.sh <model.stl> <out.gcode>
+#   COPIES=9 tools/slice.sh ...   同じものを 9 個ベッドに並べて (自動配置) スライス
 set -euo pipefail
 
 ORCA=${ORCA:-orca-slicer}
 PROFILE_DIR=${PROFILE_DIR:-profiles/orca}
 in=$(realpath "$1") out=$2
+COPIES=${COPIES:-1}
 PROFILE_DIR=$(realpath "$PROFILE_DIR")
 
 work=$(mktemp -d)
@@ -16,7 +18,7 @@ trap 'rm -rf "$work"' EXIT
 if ! (cd "$work" && "$ORCA" --datadir "$work/data" \
         --load-settings "$PROFILE_DIR/machine.json;$PROFILE_DIR/process.json" \
         --load-filaments "$PROFILE_DIR/filament.json" \
-        --arrange 1 --orient 0 --slice 0 --outputdir "$work/out" "$in") \
+        --clone-objects "$COPIES" --arrange 1 --orient 0 --slice 0 --outputdir "$work/out" "$in") \
         >"$work/log.txt" 2>&1; then
     grep -v libexpat "$work/log.txt" >&2 || true
     [[ -f $work/out/result.json ]] && cat "$work/out/result.json" >&2
