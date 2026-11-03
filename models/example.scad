@@ -1,11 +1,12 @@
 // 動作確認用サンプル: 角を丸めた箱
 include <BOSL2/std.scad>
+include <printer.scad>
 
 /* [Size] */
 width  = 40;
 depth  = 30;
 height = 15;
-wall   = 2;
+wall   = walls(3);
 radius = 3;
 
 $fn = $preview ? 32 : 96;
