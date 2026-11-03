@@ -34,6 +34,19 @@ make clean
 GUI で編集するときは、このディレクトリで `openscad models/foo.scad` を起動する
 (mise が `OPENSCADPATH=lib` を設定するので `include <BOSL2/std.scad>` が解決できる)。
 
+## grid40 シリーズ
+
+鉄板のスパイスラックに並べるユニット群。1 マス 40mm 角のグリッドで外形を揃え
+(外形 = マス数 × 40 - 0.4mm)、底面に φ6×2mm マグネットを圧入して貼り付ける。
+共通の寸法と本体 (角丸・底の面取り・マグネット穴) は `lib/grid40.scad`。
+
+| モデル | 内容 |
+| --- | --- |
+| `grid40_jar35` | φ35 寸胴瓶 (GABAN のスパイス瓶など) の位置決めプレート |
+
+新しいユニットは `include <grid40.scad>` して `diff() grid40_body(cols, rows, h) ...` に
+削る形を足して作る。マグネットの極性はシリーズ全体で揃えること。
+
 ## スライスと印刷
 
 プリンター: Elegoo Neptune 4 (0.6mm ノズル, Klipper)。Fluidd/Moonraker のホストは環境変数 `PRINTER_HOST`
@@ -48,7 +61,7 @@ make status          # プリンターの状態
 ```
 
 `@N` を付けると同じモデルを N 個ベッドに自動配置してスライスする (`make print-foo@9` など)。
-小物は時間が個数にほぼ比例する (1×1 の gaban_holder: 1 個 11 分 / 9 個 1h36m / 16 個 2h52m) ので、
+小物は時間が個数にほぼ比例する (1×1 の grid40_jar35: 1 個 11 分 / 9 個 1h36m / 16 個 2h52m) ので、
 まとめる利点は段取りが 1 回で済むことくらい。G-code は EXCLUDE_OBJECT 付きなので、
 失敗した 1 個だけ Fluidd から除外して続行できる。
 
