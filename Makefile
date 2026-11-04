@@ -4,7 +4,7 @@ FORMAT   ?= stl
 OUT      ?= out
 PROFILE_DIR ?= profiles/orca
 # プリンターに載せているフィラメント (profiles/orca/filaments/<FILAMENT>.json)
-FILAMENT ?= rapid_pla_plus
+FILAMENT ?= matte_pla
 PROFILES := $(PROFILE_DIR)/machine.json $(PROFILE_DIR)/process.json $(PROFILE_DIR)/filaments/$(FILAMENT).json
 export PROFILE_DIR FILAMENT
 ifeq ($(wildcard $(PROFILE_DIR)/filaments/$(FILAMENT).json),)

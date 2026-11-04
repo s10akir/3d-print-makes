@@ -90,9 +90,19 @@ G-code を使って作り直す。
 
 ```sh
 tools/orca_profile.py path/to/sliced.gcode profiles/orca rapid_pla_plus                   # 3 つとも
-tools/orca_profile.py --filament-only path/to/sliced.gcode profiles/orca rapid_pla_plus   # フィラメントだけ
+tools/orca_profile.py --filament-only path/to/sliced.gcode profiles/orca matte_pla        # フィラメントだけ
+```
+
+新しいフィラメントは、まず OrcaSlicer 同梱のプリセットから作れる (CLI はプリセットの継承をたどらないので、
+AppImage から同梱プリセットを取り出して展開した全項目を書き出す)。`key=value` で値を上書きでき、
+上書きした値は `filament_notes` に残る。GUI で調整したら上の `--filament-only` で置き換える。
+
+```sh
+tools/orca_filament.py "Elegoo PLA Matte @EN4 Series" profiles/orca/filaments/matte_pla.json
+tools/orca_filament.py "Elegoo PLA Matte @EN4 Series" profiles/orca/filaments/matte_pla.json fan_max_speed=60
 ```
 
 | 名前 | 内容 |
 | --- | --- |
 | `rapid_pla_plus` | Elegoo Rapid PLA+ (GUI で流量など調整済み。`lib/printer.scad` の実測値はこれで測った) |
+| `matte_pla` | Elegoo PLA Matte (同梱の `@EN4 Series` を展開しただけ。未調整) |
