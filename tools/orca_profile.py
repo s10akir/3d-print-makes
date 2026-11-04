@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 """OrcaSlicer が出力した G-code の CONFIG_BLOCK から CLI 用プリセット JSON を作る。
 
-    tools/orca_profile.py <file.gcode> <outdir>
+    tools/orca_profile.py <file.gcode> <outdir> <フィラメント名>
+    tools/orca_profile.py --filament-only <file.gcode> <outdir> <フィラメント名>
 
 GUI でスライスした G-code にはスライス設定が全項目埋め込まれているので、
-それを machine / process / filament の 3 ファイルに分けて書き出す。
+それを <outdir>/machine.json, process.json, filaments/<フィラメント名>.json に分けて書き出す。
+--filament-only ならフィラメントだけを書き出す (別のフィラメントを GUI で調整したとき)。
 OrcaSlicer 2.4.2 の CLI に合わせた調整:
   - process / filament の compatible_printers に machine の inherits を入れる
     (CLI は継承元の名前で互換性を判定する)
@@ -101,9 +103,12 @@ def unquote(s):
 
 
 def main():
-    if len(sys.argv) != 3:
+    args = sys.argv[1:]
+    filament_only = "--filament-only" in args
+    args = [a for a in args if a != "--filament-only"]
+    if len(args) != 3:
         sys.exit(__doc__)
-    src, outdir = Path(sys.argv[1]), Path(sys.argv[2])
+    src, outdir, filament_name = Path(args[0]), Path(args[1]), args[2]
     cfg = parse_config(src)
 
     # inherits_group = "<process>";"<filament>";"<machine>"
@@ -121,9 +126,11 @@ def main():
                 "filament_id": unquote(cfg.get("filament_ids", "")),
                 "compatible_printers": [inh_machine]}
 
-    outdir.mkdir(parents=True, exist_ok=True)
-    for kind, data in (("machine", machine), ("process", process), ("filament", filament)):
-        out = outdir / f"{kind}.json"
+    outputs = [(outdir / "filaments" / f"{filament_name}.json", filament)]
+    if not filament_only:
+        outputs += [(outdir / "machine.json", machine), (outdir / "process.json", process)]
+    for out, data in outputs:
+        out.parent.mkdir(parents=True, exist_ok=True)
         out.write_text(json.dumps(data, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
                        encoding="utf-8")
         print(f"{out}: {data['name']}")

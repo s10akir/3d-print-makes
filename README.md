@@ -59,7 +59,12 @@ make out/foo.gcode   # STL を profiles/orca のプリセットでスライス
 make upload-foo      # スライスしてアップロードのみ
 make print-foo       # スライスしてアップロードし、印刷開始 (印刷中なら中止)
 make status          # プリンターの状態
+make FILAMENT=rapid_pla_plus print-foo   # 別のフィラメントのプリセットでスライス
 ```
+
+フィラメントのプリセットは `profiles/orca/filaments/<名前>.json` で、`FILAMENT` で選ぶ
+(既定値は Makefile の `FILAMENT ?=`。プリンターに載せ替えたらここを変える)。
+`FILAMENT` を変えると G-code は作り直される。
 
 `@N` を付けると同じモデルを N 個ベッドに自動配置してスライスする (`make print-foo@9` など)。
 小物は時間が個数にほぼ比例する (1×1 の grid40_jar35: 1 個 11 分 / 9 個 1h36m / 16 個 2h52m) ので、
@@ -79,10 +84,15 @@ make status          # プリンターの状態
 
 ### プリセットの更新
 
-`profiles/orca/*.json` は GUI の OrcaSlicer でスライスした G-code に埋め込まれた設定から作っている。
-フィラメントを変えたり再キャリブレーションしたら、その設定で 1 回 GUI でスライスした
+`profiles/orca/machine.json` / `process.json` / `filaments/*.json` は GUI の OrcaSlicer でスライスした
+G-code に埋め込まれた設定から作っている。再キャリブレーションしたら、その設定で 1 回 GUI でスライスした
 G-code を使って作り直す。
 
 ```sh
-tools/orca_profile.py path/to/sliced.gcode profiles/orca
+tools/orca_profile.py path/to/sliced.gcode profiles/orca rapid_pla_plus                   # 3 つとも
+tools/orca_profile.py --filament-only path/to/sliced.gcode profiles/orca rapid_pla_plus   # フィラメントだけ
 ```
+
+| 名前 | 内容 |
+| --- | --- |
+| `rapid_pla_plus` | Elegoo Rapid PLA+ (GUI で流量など調整済み。`lib/printer.scad` の実測値はこれで測った) |

@@ -2,6 +2,7 @@
 # STL を profiles/orca のプリセットで G-code にスライスする
 #   tools/slice.sh <model.stl> <out.gcode>
 #   COPIES=9 tools/slice.sh ...   同じものを 9 個ベッドに並べて (自動配置) スライス
+#   FILAMENT=rapid_pla_plus tools/slice.sh ...   profiles/orca/filaments/<FILAMENT>.json を使う
 set -euo pipefail
 
 ORCA=${ORCA:-orca-slicer}
@@ -9,6 +10,9 @@ PROFILE_DIR=${PROFILE_DIR:-profiles/orca}
 in=$(realpath "$1") out=$2
 COPIES=${COPIES:-1}
 PROFILE_DIR=$(realpath "$PROFILE_DIR")
+FILAMENT=${FILAMENT:?FILAMENT にフィラメント名を指定してください (profiles/orca/filaments/<名前>.json)}
+filament_json=$PROFILE_DIR/filaments/$FILAMENT.json
+[[ -f $filament_json ]] || { echo "no such filament preset: $filament_json" >&2; exit 1; }
 
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
@@ -17,7 +21,7 @@ trap 'rm -rf "$work"' EXIT
 # 作業ディレクトリにログ (00000.log 等) を出すので一時ディレクトリで実行する
 if ! (cd "$work" && "$ORCA" --datadir "$work/data" \
         --load-settings "$PROFILE_DIR/machine.json;$PROFILE_DIR/process.json" \
-        --load-filaments "$PROFILE_DIR/filament.json" \
+        --load-filaments "$filament_json" \
         --clone-objects "$COPIES" --arrange 1 --orient 0 --slice 0 --outputdir "$work/out" "$in") \
         >"$work/log.txt" 2>&1; then
     grep -v libexpat "$work/log.txt" >&2 || true
