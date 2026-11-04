@@ -4,8 +4,11 @@
 // 尾根が束を下から支えるので、残りが減っても頂点が取り出し口の近くに残る。
 // かぶせた束は外側のシートほど脚が短くなり、断面は下すぼまりの扇形になる。
 // 下すぼまりの六角形にちょうど収まるので、この形にしている。
-// 尾根は最も内側のシートの脚 (約 80mm) より少し低くし、余りを床に寝かせて全高を抑える。
+// 尾根は最も内側のシートの脚 (約 80mm) より低くし、余りを床に寝かせて全高を抑える。
 // 2026-11-04 テストピースで確認: 一辺 75 で、手を離すと束が内部いっぱいに広がり、押さえると少し余裕がある。
+// 2026-11-04 初版 (尾根 71) で確認: 新品だと束が天井に押し付けられ、箱を押さえないと引き出せない。
+//   1/8 減らすとぎりぎり、1/4 (束の厚さで約 14mm) 減らすと快適、1/2 まで減っても不便はない。
+//   そこで尾根を 14mm 下げて、新品でも 1/4 減らしたときの余裕を持たせた。
 //
 // 部品: 本体 (背面の壁・筒・尾根・取り出し口が一体) と前面の蓋。蓋を外して前から束を差し込む。
 // 本体は背面を下にして刷る。積層の線が断面の六角形に沿うので、壁を滑り上がるシートが
@@ -24,7 +27,7 @@ end_t   = layers_up(2.4);  // 背面と蓋の板の厚さ (ベッド面)
 
 /* [Ridge] */
 ridge_w = 20;  // 尾根の幅 (頂点は半円)
-ridge_h = 71;  // 尾根の高さ (床から)
+ridge_h = 57;  // 尾根の高さ (床から)
 
 /* [Opening] */
 open_shape = "hex";  // [hex, point, round] 両端の形 (下の opening_2d を参照)
@@ -36,7 +39,8 @@ rim_ch  = 2;    // 内側の縁の面取り (シートが引っかからない�
 open_ch = 0.6;  // 外側の縁の面取り
 
 /* [Magnets] */
-// φ6×2 を上の 2 つの角と左右の角に 4 組。下の 2 つの角は束の脚の端が来るので避ける。
+// φ6×2 を 6 つの角すべてに。初版は下の 2 つの角を避けて 4 組にしたが、
+// 蓋を下に向けると束の重さで外れた (2026-11-04)。
 magnet_d   = 6;
 magnet_h   = 2;
 mag_recess = 1.2;  // 本体の台座を前の端からこれだけ奥に下げ、蓋の出っ張りをはめる (位置合わせ)
@@ -62,7 +66,7 @@ function hex_pts(a = side) =
     [[-a / 2, 0], [a / 2, 0], [a, h / 2], [a / 2, h], [-a / 2, h], [-a, h / 2]];
 
 // マグネットを置く角 (hex_pts の番号)
-mag_corners = [2, 3, 4, 5];
+mag_corners = [0, 1, 2, 3, 4, 5];
 
 // 内側の正六角形 (2D: X = 幅, Y = 高さ。床が 0)
 module hex_2d(a = side) {
@@ -136,12 +140,21 @@ module tissue_box_body() {
             // 尾根 (2 ラインの殻。前の端は開けたまま、背面の板でふさがる)
             extrude_y(box_back - box_front - 1, box_front + 1)
                 difference() { ridge_2d(); offset(delta = -wall) ridge_2d(); }
-            // 取り出し口のまわりを内側へ厚くする (前後の端の板からははみ出さない)
-            up(inner_h - rim_in) linear_extrude(rim_in + 0.01)
-                intersection() {
-                    opening_2d(rim_ch + rim_w);
-                    rect([2 * side, inner_d], anchor = CENTER);
-                }
+            // 取り出し口のまわりを内側へ厚くする (前後の端の板からははみ出さない)。
+            // 前後の端は 45° で薄くする。背面を下に刷ると奥の端が水平の張り出しになり、
+            // 壁の中身がその層で急に変わって外側の面に帯が出たため (初版)
+            intersection() {
+                up(inner_h - rim_in) linear_extrude(rim_in + 0.01)
+                    intersection() {
+                        opening_2d(rim_ch + rim_w);
+                        rect([2 * side, inner_d], anchor = CENTER);
+                    }
+                rim_l = open_l / 2 + rim_ch + rim_w;
+                rotate([90, 0, 90]) linear_extrude(2 * side + 2, center = true)
+                    polygon([[-rim_l - 1, inner_h + 1], [rim_l + 1, inner_h + 1],
+                             [rim_l - rim_in, inner_h - rim_in - 0.01],
+                             [-(rim_l - rim_in), inner_h - rim_in - 0.01]]);
+            }
             // マグネットの台座 (奥側は 45° で角へすぼめ、背面を下に刷っても張り出しにならない)
             for (i = mag_corners)
                 hull() {
@@ -176,8 +189,8 @@ module tissue_box_lid() {
         }
         for (i = mag_corners)
             magnet_hole(i, box_front + pad_h + 0.01, -1);
-        // 指かけ (上の辺の中央。蓋の内側の面を削り、本体との間にすき間を作る)
-        translate([0, box_front - notch_d / 2 + 0.01, inner_h + wall - notch_l / 2 + 0.5])
+        // 指かけ (下の辺の中央。蓋の内側の面を削り、本体との間にすき間を作る)
+        translate([0, box_front - notch_d / 2 + 0.01, -wall + notch_l / 2 - 0.5])
             cube([notch_w, notch_d + 0.02, notch_l + 1], center = true);
     }
 }
