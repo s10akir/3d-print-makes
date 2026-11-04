@@ -106,3 +106,14 @@ tools/orca_filament.py "Elegoo PLA Matte @EN4 Series" profiles/orca/filaments/ma
 | --- | --- |
 | `rapid_pla_plus` | Elegoo Rapid PLA+ (GUI で流量など調整済み。`lib/printer.scad` の実測値はこれで測った) |
 | `matte_pla` | Elegoo PLA Matte (同梱の `@EN4 Series` を展開しただけ。未調整) |
+
+### フィラメントを替えたときの壁の確認
+
+`models/calib_wall_ring.scad` は 2 ラインの壁の筒 (1 周の長さは tissue_box と同じ)。
+`tools/gcode_steps.py` で高さごとにファンや温度を変えて刷り、段ごとに 2 本の線の融着を比べる。
+
+```sh
+make out/calib_wall_ring.gcode
+tools/gcode_steps.py out/calib_wall_ring.gcode out/calib_wall_ring_fan.gcode --fan 0.6:80 8:60 16:40 24:20
+tools/moonraker.sh print out/calib_wall_ring_fan.gcode
+```
